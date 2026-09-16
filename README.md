@@ -29,7 +29,7 @@ This suite of scripts provides administrative, time-synchronization, and network
 | :--- | :--- | :--- | :--- |
 | `master_daemon.py` | Python | Master (`C-0`) | HTTP reference clock server and centralized log collector. |
 | `sync_daemon.py` | Python | Workers (`C-1`–`C-6`) | Unprivileged background agent for UTC drift correction. |
-| `fix_wsl_ports.ps1` | PowerShell | Any Host | Detects dynamic WSL2 IP and updates `netsh portproxy` rules. |
+| `fix-wsl-ports.ps1` | PowerShell | Any Host | Detects dynamic WSL2 IP and updates `netsh portproxy` rules. |
 | `start_master.ps1` | PowerShell | Master (`C-0`) | Bootstraps WSL Ubuntu, clears stale bindings, and maps ports `52415` & `7447`. |
 
 ---
@@ -58,8 +58,6 @@ Acts as the authoritative pure UTC reference clock and records worker status met
 bash
 python master_daemon.py
 
-```
-
 ### 4.2. `sync_daemon.py` (Worker Node Client)
 
 Runs in the background on worker nodes, terminates `w32time`, and continuously aligns the host system clock with Master `C-0`.
@@ -67,24 +65,23 @@ Runs in the background on worker nodes, terminates `w32time`, and continuously a
 * **Master Target:** `10.147.1.97:8080`
 * **Default Polling Interval:** 10 minutes
 
-```powershell
+powershell
 # Standard execution (10-minute interval)
 python sync_daemon.py
 
 # Custom execution (e.g., 5-minute interval)
 python sync_daemon.py 5
 
-```
 
 > **Security Note:** Requires Administrator privileges to invoke `SetSystemTime` (`kernel32.dll`) and control services. If launched without elevation, the script displays a warning and enters an idle loop to avoid repetitive exception logging.
 
-### 4.3. `fix_wsl_ports.ps1` (WSL2 Portproxy Updater)
+### 4.3. `fix-wsl-ports.ps1` (WSL2 Portproxy Updater)
 
 Forwards incoming host traffic on ports `52415` and `7447` directly to the dynamic IP assigned to the WSL2 guest container.
 
 powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\fix_wsl_ports.ps1
+.\fix-wsl-ports.ps1
 
 
 ### 4.4. `start_master.ps1` (Master Node Initializer)
@@ -116,10 +113,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 ### [C] WSL2 Network Proxy Task Setup
 
-1. Register `fix_wsl_ports.ps1` or `start_master.ps1`:
+1. Register `fix-wsl-ports.ps1` or `start_master.ps1`:
 * **Trigger:** *At system startup* or *At user log on*
 * **Action:** `powershell.exe`
-* **Arguments:** `-ExecutionPolicy Bypass -File "C:\Path\To\fix_wsl_ports.ps1"`
+* **Arguments:** `-ExecutionPolicy Bypass -File "C:\Path\To\fix-wsl-ports.ps1"`
 * **Options:** *Run with highest privileges*
 
 
@@ -134,7 +131,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 
 * **Zero Incoming Traffic in WSL2:**
-* *Fix:* Re-run `fix_wsl_ports.ps1` as Administrator to update proxy tables after a WSL reboot. Inspect active rules via:
+* *Fix:* Re-run `fix-wsl-ports.ps1` as Administrator to update proxy tables after a WSL reboot. Inspect active rules via:
 powershell
 netsh interface portproxy show all
 
